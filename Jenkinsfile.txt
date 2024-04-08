@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+
+    stages {
+       
+        
+    
+    stage('Hello') {
+            steps {
+                echo 'Hello World'
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                def crumb = sh(script: "curl -s 'http://localhost:8080/crumbIssuer/api/xml' | grep -oP '(?<=<crumb>).*(?=</crumb>)'", returnStdout: true).trim()
+                emailext (
+                    to: 'jenkinstesting01@gmail.com',
+                    subject: 'Build Notification with HTML Report',
+                    body: """<p>Dear User,</p>
+                            <p>The build is complete. Here is the HTML report:</p>
+                            <p><iframe src="${BUILD_URL}/path/to/report.html" width="100%" height="600"></iframe></p>""",
+                    mimeType: 'text/html',
+                    replyTo: '$DEFAULT_RECIPIENTS',
+                    headers: [
+                        [name: 'Jenkins-Crumb', value: crumb]
+                    ]
+                )
+            }
+        }
+    }
+}
